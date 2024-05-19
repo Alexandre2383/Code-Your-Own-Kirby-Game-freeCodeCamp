@@ -149,7 +149,7 @@ export function setControls(k: KaboomCtx, player: PlayerGameObj) {
   })
 
   k.onKeyPress((key) => {
-    if (key === 'x') player.doubleJump()
+    if (key === 'up') player.doubleJump()
   })
 
   k.onKeyRelease((key) => {
@@ -174,7 +174,16 @@ export function setControls(k: KaboomCtx, player: PlayerGameObj) {
             : k.move(k.RIGHT, 800),
           'shootingStar',
         ])
+        shootingStar.onCollide('platform', () => k.destroy(shootingStar))
+
+        player.isFull = false
+        k.wait(1, () => player.play('kirbIdle'))
+        return
       }
+
+      inhaleEffectRef.opacity = 0
+      player.isInhaling = false
+      player.play('kirbIdle')
     }
   })
 }
