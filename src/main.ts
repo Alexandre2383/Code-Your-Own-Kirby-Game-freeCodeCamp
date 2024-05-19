@@ -1,24 +1,72 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+// import kaboom context
+import { makePlayer } from './entities'
+import { k } from './kaboomCtx'
+import { makeMap } from './utils'
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+async function gameSetup() {
+  // with k context we can use loadSprite function wich is a kaboom function
+  k.loadSprite('assets', './kirby-like.png', {
+    sliceX: 9,
+    sliceY: 10,
+    anims: {
+      kirbIdle: 0,
+      kirbInhaling: 1,
+      kirbFull: 2,
+      kirbInhaleEffect: { from: 3, to: 8, speed: 15, loop: true },
+      shootingStar: 9,
+      flame: { from: 36, to: 37, speed: 4, loop: true },
+      guyIdle: 18,
+      guyWalk: { from: 18, to: 19, speed: 4, loop: true },
+      bird: { from: 27, to: 28, speed: 4, loop: true },
+    },
+  })
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+  k.loadSprite('level-1', './level-1.png')
+
+  const { map: level1Layout, spawnPoints: level1SpawnPoints } = await makeMap(
+    k,
+    'level-1'
+  )
+
+  k.scene('level-1', () => {
+    k.setGravity(2100)
+    k.add([
+      k.rect(k.width(), k.height()),
+      k.color(k.Color.fromHex('#f7d7db')),
+      k.fixed(),
+    ])
+
+    k.add(level1Layout)
+
+    console.log('level1SpawnPoints:', level1SpawnPoints)
+
+    if (
+      !level1SpawnPoints ||
+      !level1SpawnPoints.player ||
+      !level1SpawnPoints.player[0]
+    ) {
+      console.error(
+        'level1SpawnPoints or its player property is not correctly defined'
+      )
+      return
+    }
+
+    const kirb = makePlayer(
+      k,
+      level1SpawnPoints.player[0].x,
+      level1SpawnPoints.player[0].y
+    )
+
+    k.add(kirb)
+    k.camScale(0.7, 0.7)
+    k.onUpdate(() => {
+      if (kirb.pos.x < level1Layout.pos.x + 432) {
+        k.camPos(kirb.pos.x + 500, 800)
+      }
+    })
+  })
+
+  k.go('level-1')
+}
+
+gameSetup()
